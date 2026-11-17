@@ -1,22 +1,36 @@
 package com.orineatovhakale.portfolio;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import com.orineatovhakale.portfolio.contact.ContactMessageRepository;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class PortfolioApplicationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ContactMessageRepository contactMessageRepository;
+
+    @BeforeEach
+    void clearContactMessages() {
+        contactMessageRepository.deleteAll();
+    }
 
     @Test
     void healthEndpointReportsApplicationIsUp() throws Exception {
@@ -59,5 +73,40 @@ class PortfolioApplicationTest {
                 .andExpect(jsonPath("$[0].technologies[1]").value("Node.js"))
                 .andExpect(jsonPath("$[0].contributions.length()").value(3))
                 .andExpect(jsonPath("$[0].liveUrl").value("https://palekoholdings.co.za"));
+    }
+
+    @Test
+    void contactEndpointValidatesAndStoresMessage() throws Exception {
+        mockMvc.perform(post("/api/contact")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "  Alex Example  ",
+                                  "email": "  alex@example.com  ",
+                                  "message": "I would like to discuss a project."
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.receivedAt").isNotEmpty());
+
+        var savedMessage = contactMessageRepository.findAll().getFirst();
+        org.assertj.core.api.Assertions.assertThat(savedMessage.getId()).isNotNull();
+    }
+
+    @Test
+    void contactEndpointRejectsInvalidEmail() throws Exception {
+        mockMvc.perform(post("/api/contact")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Alex Example",
+                                  "email": "not-an-email",
+                                  "message": "I would like to discuss a project."
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        org.assertj.core.api.Assertions.assertThat(contactMessageRepository.count()).isZero();
     }
 }
