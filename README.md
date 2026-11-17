@@ -27,9 +27,10 @@ The JSON body must include a name, valid email address, and a message between
 10 and 5,000 characters. Submissions are stored in MySQL.
 
 To run the application, create a MySQL database named `portfolio` and a user
-with permission to access it, then set `DB_USERNAME` and `DB_PASSWORD` in your
-environment. `DB_URL` is optional and defaults to
-`jdbc:mysql://localhost:3306/portfolio`. The tests use an in-memory H2 database.
+with permission to access it. Copy `.env.example` to `.env` and set your local
+database credentials there. Spring Boot loads `.env` automatically;
+`.env` is ignored by Git and must never be committed. The tests use an
+in-memory H2 database.
 
 ## Frontend
 
