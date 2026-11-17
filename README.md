@@ -31,6 +31,21 @@ with permission to access it, then set `DB_USERNAME` and `DB_PASSWORD` in your
 environment. `DB_URL` is optional and defaults to
 `jdbc:mysql://localhost:3306/portfolio`. The tests use an in-memory H2 database.
 
+## Frontend
+
+The Angular application is in `frontend/`. Start the Spring Boot API, then run
+the frontend in a separate terminal:
+
+```sh
+cd frontend
+npm install
+npm start
+```
+
+Angular serves the portfolio at `http://localhost:4200` and proxies `/api`
+requests to the backend. Set `FRONTEND_ORIGIN` if the deployed frontend uses a
+different origin. See `frontend/README.md` for build and test commands.
+
 ## Run tests
 
 ```sh

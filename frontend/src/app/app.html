@@ -1,0 +1,155 @@
+<header class="site-header">
+  <a class="wordmark" href="#home" aria-label="Orinea Tovhakale home">OT<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <a href="#about">About</a>
+    <a href="#work">Work</a>
+    <a class="nav-contact" href="#contact">Contact <span aria-hidden="true">↗</span></a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero section-shell" id="home">
+    <div class="hero-copy">
+      <p class="eyebrow">
+        <span class="status-dot" aria-hidden="true"></span>
+        {{ profile()?.name ?? 'SOFTWARE DEVELOPMENT' }} · {{ profile()?.title ?? 'DATA SCIENCE' }}
+      </p>
+      <h1>Building with purpose.<br /><span>Thinking in data.</span></h1>
+
+      @if (loading()) {
+        <p class="content-note" role="status">Loading portfolio…</p>
+      }
+
+      @if (loadError()) {
+        <div class="content-error" role="alert">
+          <p>{{ loadError() }}</p>
+          <button class="text-button" type="button" (click)="loadPortfolio()">
+            Try again <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      }
+
+      @if (profile(); as currentProfile) {
+        <p class="hero-tagline">{{ currentProfile.tagline }}</p>
+        <p class="hero-summary">{{ biographyParagraphs()[0] }}</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#work">Explore my work <span aria-hidden="true">↓</span></a>
+          <a class="button button-quiet" href="#contact">Let’s talk <span aria-hidden="true">↗</span></a>
+        </div>
+      }
+    </div>
+
+    <div class="hero-aside" aria-label="Areas of focus">
+      <span class="orbit orbit-one"></span>
+      <span class="orbit orbit-two"></span>
+      <div class="monogram" aria-hidden="true">OT</div>
+      <div class="focus-card">
+        <span class="focus-index">01 / FOCUS</span>
+        <p>Software<br />&amp; data</p>
+        <span class="focus-line"></span>
+      </div>
+      <span class="hero-coordinate">SOUTH AFRICA · 2026</span>
+    </div>
+  </section>
+
+  <div class="section-rule"><span>01</span><span>THE PERSON BEHIND THE WORK</span></div>
+  <section class="about section-shell" id="about">
+    <div class="section-heading">
+      <p class="eyebrow">A LITTLE ABOUT ME</p>
+      <h2>Curiosity is where<br />good work begins.</h2>
+    </div>
+    <div class="about-copy">
+      @if (loading()) {
+        <p class="content-note">Loading my story…</p>
+      }
+      @for (paragraph of biographyParagraphs().slice(1); track paragraph) {
+        <p>{{ paragraph }}</p>
+      }
+    </div>
+  </section>
+
+  <div class="section-rule"><span>02</span><span>SELECTED WORK</span></div>
+  <section class="work section-shell" id="work">
+    <div class="work-intro">
+      <div>
+        <p class="eyebrow">A SELECTION OF WHAT I’VE BUILT</p>
+        <h2>Work that works<br />in the real world.</h2>
+      </div>
+      <p class="work-note">Thoughtful digital experiences, built to solve real problems and create lasting value.</p>
+    </div>
+
+    <div class="project-list">
+      @for (project of projects(); track project.name; let index = $index) {
+        <article class="project-card">
+          <div class="project-number">0{{ index + 1 }}</div>
+          <div class="project-main">
+            <div class="project-title-row">
+              <h3>{{ project.name }}</h3>
+              <a [href]="project.liveUrl" target="_blank" rel="noreferrer" [attr.aria-label]="'Visit ' + project.name + ' website'">↗</a>
+            </div>
+            <p class="project-description">{{ project.description }}</p>
+            <p class="project-role">{{ project.role }}</p>
+            <ul class="tag-list" aria-label="Technologies">
+              @for (technology of project.technologies; track technology) {
+                <li>{{ technology }}</li>
+              }
+            </ul>
+          </div>
+          <div class="project-contributions">
+            <span class="eyebrow">MY CONTRIBUTION</span>
+            <ul>
+              @for (contribution of project.contributions; track contribution) {
+                <li>{{ contribution }}</li>
+              }
+            </ul>
+          </div>
+        </article>
+      } @empty {
+        @if (!loading() && !loadError()) {
+          <p class="content-note">More projects are on the way.</p>
+        }
+      }
+    </div>
+  </section>
+
+  <div class="section-rule"><span>03</span><span>START A CONVERSATION</span></div>
+  <section class="contact section-shell" id="contact">
+    <div class="contact-copy">
+      <p class="eyebrow">HAVE A GOOD ONE IN MIND?</p>
+      <h2>Let’s make<br />something matter.</h2>
+      <p>I’m always open to thoughtful conversations, interesting problems, and opportunities to make a positive impact.</p>
+    </div>
+
+    <form class="contact-form" [formGroup]="contactForm" (ngSubmit)="submitContact()">
+      <label>
+        Your name
+        <input autocomplete="name" formControlName="name" maxlength="100" required />
+      </label>
+      <label>
+        Email address
+        <input autocomplete="email" formControlName="email" maxlength="254" required type="email" />
+      </label>
+      <label>
+        What’s on your mind?
+        <textarea formControlName="message" maxlength="5000" minlength="10" required rows="4"></textarea>
+      </label>
+      <div class="form-footer">
+        <button class="button button-primary" [disabled]="contactState() === 'sending'" type="submit">
+          {{ contactState() === 'sending' ? 'Sending…' : 'Send message' }} <span aria-hidden="true">↗</span>
+        </button>
+        @if (contactState() === 'success') {
+          <p class="form-status success" role="status">Thanks for reaching out. Your message has been received.</p>
+        }
+        @if (contactState() === 'error') {
+          <p class="form-status error" role="alert">Your message could not be sent. Please try again in a little while.</p>
+        }
+      </div>
+    </form>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <a class="wordmark" href="#home">OT<span>.</span></a>
+  <p>Building technology. Understanding data. Creating impact.</p>
+  <a href="#home">Back to top ↑</a>
+</footer>
