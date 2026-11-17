@@ -31,6 +31,20 @@ with permission to access it, then set `DB_USERNAME` and `DB_PASSWORD` in your
 environment. `DB_URL` is optional and defaults to
 `jdbc:mysql://localhost:3306/portfolio`. The tests use an in-memory H2 database.
 
+## Frontend
+
+The React and TypeScript app is in `frontend/`. Start the Spring Boot API first,
+then run the frontend in a separate terminal:
+
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+Vite serves the portfolio locally and proxies API requests to the backend.
+See `frontend/README.md` for frontend configuration and production builds.
+
 ## Run tests
 
 ```sh
