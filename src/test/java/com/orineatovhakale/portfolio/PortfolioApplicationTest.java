@@ -45,4 +45,19 @@ class PortfolioApplicationTest {
                                 """
                 ));
     }
+
+    @Test
+    void projectsEndpointReturnsPalekoHoldingsProject() throws Exception {
+        mockMvc.perform(get("/api/projects"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Paleko Holdings"))
+                .andExpect(jsonPath("$[0].role").value("Software Developer"))
+                .andExpect(jsonPath("$[0].technologies[0]").value("React"))
+                .andExpect(jsonPath("$[0].technologies[1]").value("Node.js"))
+                .andExpect(jsonPath("$[0].contributions.length()").value(3))
+                .andExpect(jsonPath("$[0].liveUrl").value("https://palekoholdings.co.za"));
+    }
 }
