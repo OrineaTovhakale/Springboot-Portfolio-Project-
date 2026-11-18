@@ -18,6 +18,7 @@ export class App implements OnInit {
   protected readonly loading = signal(true);
   protected readonly loadError = signal('');
   protected readonly contactState = signal<'idle' | 'sending' | 'success' | 'error'>('idle');
+  protected readonly toast = signal<{ kind: 'success' | 'error'; message: string } | null>(null);
   protected readonly biographyParagraphs = computed(() =>
     this.profile()?.biography.split(/\n\s*\n/).filter(Boolean) ?? [],
   );
@@ -53,18 +54,35 @@ export class App implements OnInit {
       return;
     }
 
+    this.dismissToast();
     this.contactState.set('sending');
     this.api.submitContactMessage(this.contactForm.getRawValue()).subscribe({
       next: () => {
         this.contactForm.reset();
         this.contactState.set('success');
+        this.showToast('success', 'Thanks for reaching out. Your message has been received.');
       },
       error: (error: HttpErrorResponse) => {
         this.contactState.set('error');
         if (error.status === 400) {
-          this.contactForm.setErrors({ invalidSubmission: true });
+          this.showToast('error', 'Please check your details and try again.');
+        } else {
+          this.showToast('error', 'We couldn’t send your message just now. Please try again in a moment.');
         }
       },
     });
   }
-}
+
+  protected dismissToast(): void {
+    window.clearTimeout(this.toastTimer);
+    this.toast.set(null);
+  }
+
+  private toastTimer = 0;
+
+  private showToast(kind: 'success' | 'error', message: string): void {
+    window.clearTimeout(this.toastTimer);
+    this.toast.set({ kind, message });
+    this.toastTimer = window.setTimeout(() => this.toast.set(null), 7000);
+  }
+  }

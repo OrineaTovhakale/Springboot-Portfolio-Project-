@@ -68,6 +68,44 @@ describe('App', () => {
     request.flush({ id: 1, receivedAt: '2026-11-17T19:00:00Z' });
     fixture.detectChanges();
 
-    expect(element.textContent).toContain('Your message has been received.');
+    expect(element.querySelector('[role="status"]')?.textContent).toContain('Your message has been received.');
+    expect(element.querySelector('.form-footer')?.textContent).not.toContain('Your message has been received.');
+  });
+
+  it('shows a dismissible accessible toast when contact submission fails', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    httpTesting.expectOne('/api/profile').flush({
+      name: 'Orinea Tovhakale',
+      title: 'Software Developer / Data Scientist',
+      tagline: 'Building Technology. Understanding Data. Creating Impact.',
+      biography: 'First paragraph.',
+    });
+    httpTesting.expectOne('/api/projects').flush([]);
+
+    const element = fixture.nativeElement as HTMLElement;
+    const name = element.querySelector<HTMLInputElement>('[formControlName="name"]')!;
+    const email = element.querySelector<HTMLInputElement>('[formControlName="email"]')!;
+    const message = element.querySelector<HTMLTextAreaElement>('[formControlName="message"]')!;
+    name.value = 'Alex Example';
+    name.dispatchEvent(new Event('input'));
+    email.value = 'alex@example.com';
+    email.dispatchEvent(new Event('input'));
+    message.value = 'I would like to discuss a project.';
+    message.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    element.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    httpTesting.expectOne('/api/contact').flush('Unavailable', { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+
+    const toast = element.querySelector<HTMLElement>('.toast');
+    expect(toast?.getAttribute('role')).toBe('alert');
+    expect(toast?.textContent).toContain('We couldn’t send your message just now.');
+    expect(toast?.textContent).not.toContain('Your message could not be sent.');
+    expect(element.querySelector('.form-footer')?.textContent).not.toContain('couldn’t send');
+    element.querySelector<HTMLButtonElement>('[aria-label="Dismiss notification"]')!.click();
+    fixture.detectChanges();
+    expect(element.querySelector('.toast')).toBeNull();
   });
 });

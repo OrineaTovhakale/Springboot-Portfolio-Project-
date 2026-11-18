@@ -137,12 +137,6 @@
         <button class="button button-primary" [disabled]="contactState() === 'sending'" type="submit">
           {{ contactState() === 'sending' ? 'Sending…' : 'Send message' }} <span aria-hidden="true">↗</span>
         </button>
-        @if (contactState() === 'success') {
-          <p class="form-status success" role="status">Thanks for reaching out. Your message has been received.</p>
-        }
-        @if (contactState() === 'error') {
-          <p class="form-status error" role="alert">Your message could not be sent. Please try again in a little while.</p>
-        }
       </div>
     </form>
   </section>
@@ -153,3 +147,16 @@
   <p>Building technology. Understanding data. Creating impact.</p>
   <a href="#home">Back to top ↑</a>
 </footer>
+
+@if (toast(); as notification) {
+  <div
+    class="toast"
+    [class.toast-error]="notification.kind === 'error'"
+    [attr.role]="notification.kind === 'error' ? 'alert' : 'status'"
+    [attr.aria-live]="notification.kind === 'error' ? 'assertive' : 'polite'"
+    aria-atomic="true"
+  >
+    <p>{{ notification.message }}</p>
+    <button type="button" aria-label="Dismiss notification" (click)="dismissToast()">×</button>
+  </div>
+}
