@@ -32,6 +32,13 @@ database credentials there. Spring Boot loads `.env` automatically;
 `.env` is ignored by Git and must never be committed. The tests use an
 in-memory H2 database.
 
+Contact submissions send a notification to `CONTACT_NOTIFICATION_RECIPIENT`
+and a confirmation to the visitor using Gmail SMTP. Enable 2-Step Verification
+on the Gmail account in `MAIL_USERNAME`, create a Google App Password, and set
+it as `MAIL_PASSWORD` in `.env` (remove spaces from the generated password).
+Do not use your regular Gmail password or commit these credentials. Email
+delivery must be configured for contact submissions to complete successfully.
+
 ## Frontend
 
 The Angular application is in `frontend/`. Start the Spring Boot API, then run

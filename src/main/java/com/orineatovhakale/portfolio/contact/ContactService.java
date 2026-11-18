@@ -7,9 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ContactService {
 
     private final ContactMessageRepository repository;
+    private final ContactEmailService emailService;
 
-    public ContactService(ContactMessageRepository repository) {
+    public ContactService(ContactMessageRepository repository, ContactEmailService emailService) {
         this.repository = repository;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -20,6 +22,7 @@ public class ContactService {
                 request.message()
         );
         ContactMessage savedMessage = repository.save(message);
+        emailService.sendContactEmails(request);
         return new ContactResponse(savedMessage.getId(), savedMessage.getCreatedAt());
     }
 }

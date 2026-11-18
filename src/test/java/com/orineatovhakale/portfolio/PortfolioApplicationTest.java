@@ -3,13 +3,22 @@ package com.orineatovhakale.portfolio;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailSendException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import com.orineatovhakale.portfolio.contact.ContactMessageRepository;
+import org.mockito.ArgumentCaptor;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -17,7 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.mail.username=portfolio-test@gmail.com",
+        "spring.mail.password=test-password",
+        "portfolio.contact.notification-recipient=tovhakaleo@gmail.com",
+        "management.health.mail.enabled=false"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class PortfolioApplicationTest {
@@ -27,6 +41,9 @@ class PortfolioApplicationTest {
 
     @Autowired
     private ContactMessageRepository contactMessageRepository;
+
+    @MockitoBean
+    private JavaMailSender mailSender;
 
     @BeforeEach
     void clearContactMessages() {
@@ -98,8 +115,40 @@ class PortfolioApplicationTest {
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.receivedAt").isNotEmpty());
 
+        ArgumentCaptor<SimpleMailMessage> emailCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender, times(2)).send(emailCaptor.capture());
+        var emails = emailCaptor.getAllValues();
+        org.assertj.core.api.Assertions.assertThat(emails.get(0).getTo())
+                .containsExactly("tovhakaleo@gmail.com");
+        org.assertj.core.api.Assertions.assertThat(emails.get(0).getReplyTo()).isEqualTo("alex@example.com");
+        org.assertj.core.api.Assertions.assertThat(emails.get(0).getText())
+                .contains("I would like to discuss a project.");
+        org.assertj.core.api.Assertions.assertThat(emails.get(1).getTo()).containsExactly("alex@example.com");
+        org.assertj.core.api.Assertions.assertThat(emails.get(1).getText())
+                .contains("Thanks for reaching out");
+
         var savedMessage = contactMessageRepository.findAll().getFirst();
         org.assertj.core.api.Assertions.assertThat(savedMessage.getId()).isNotNull();
+    }
+
+    @Test
+    void contactEndpointDoesNotReportSuccessWhenEmailDeliveryFails() throws Exception {
+        doThrow(new MailSendException("SMTP unavailable"))
+                .when(mailSender)
+                .send(any(SimpleMailMessage.class));
+
+        mockMvc.perform(post("/api/contact")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Alex Example",
+                                  "email": "alex@example.com",
+                                  "message": "I would like to discuss a project."
+                                }
+                                """))
+                .andExpect(status().isServiceUnavailable());
+
+        org.assertj.core.api.Assertions.assertThat(contactMessageRepository.count()).isZero();
     }
 
     @Test

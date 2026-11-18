@@ -1,7 +1,9 @@
 package com.orineatovhakale.portfolio.contact;
 
 import jakarta.validation.Valid;
+import org.springframework.mail.MailException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,5 +24,10 @@ public class ContactController {
     @ResponseStatus(HttpStatus.CREATED)
     public ContactResponse submit(@Valid @RequestBody ContactRequest request) {
         return contactService.submit(request);
+    }
+
+    @ExceptionHandler(MailException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public void emailDeliveryUnavailable() {
     }
 }
